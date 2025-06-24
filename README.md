@@ -1,24 +1,75 @@
-# MeridianAlgo - Ourtake
+# Stock Monitor
 
-**MeridianAlgo** offers our unique take on popular trading bot strategies. As a non-profit, we leverage Alpaca's paper trading features for all "buy and sell" orders, focusing solely on research and development without financial gain.
+A Node.js application for monitoring stocks, analyzing moving averages, and executing trades using Alpaca's paper trading API. It fetches price data from Yahoo Finance and Finnhub, and checks market status with Polygon.
 
-## 🌟 Overview
+## Features
+- Real-time and historical price monitoring
+- Multiple moving average strategies (SMA, EMA, HMA, etc.)
+- Automatic buy/sell signals and paper trading via Alpaca
+- Market status checks (Polygon, Yahoo Finance)
+- Configurable timeframes (1m, 5m, 15m, 1h, 1d)
 
-The `QuantumMA` module is a core component of MeridianAlgo's research, designed to identify optimal moving average (MA) strategies adaptively. Unlike traditional moving averages with fixed lengths, `QuantumMA` dynamically determines the best-performing MA type and length for a given set of price data. This adaptive approach aims to provide more responsive and insightful trend analysis. We implment this into our bots which then do all the work for you.
+## Prerequisites
+- Node.js (v14 or higher recommended)
+- npm (Node Package Manager)
+- API keys for:
+  - [Alpaca](https://alpaca.markets/)
+  - [Polygon.io](https://polygon.io/) (for market status)
+  - [Finnhub](https://finnhub.io/) (for real-time prices)
 
-## ✨ Features
+## Installation
 
-* **Adaptive Moving Average Selection:** Automatically evaluates multiple MA types (SMA, EMA, WMA, Hull, ALMA, RMA, LINREG, VWMA) and various lengths to find the best fit.
-* **Performance Scoring:** Utilizes a custom scoring mechanism to evaluate the effectiveness of different MA configurations based on historical price movements.
-* **R-squared Calculation:** Provides an R-squared value to indicate how well the chosen moving average fits the price data.
-* **Trend Direction Analysis:** Offers a clear "Bullish," "Bearish," or "Neutral" trend indication based on the optimal MA.
-* **Flexible Configuration:** Customizable `baseLength`, `evalPeriod`, `almaOffset`, and `almaSigma` parameters for fine-tuning the analysis.
-* **Node.js & Python Compatibility:** While the primary implementation provided here is in Node.js, the core logic is designed to be easily translatable and integrated into our Python-based trading infrastructure.
+1. **Clone the repository:**
+   ```sh
+   git clone <repo-url>
+   cd Stock
+   ```
 
-## 🚀 How it Works (Node.js)
+2. **Install dependencies:**
+   You can install all required packages at once with:
+   ```sh
+   npm install @alpacahq/alpaca-trade-api axios dotenv node-cron ws yahoo-finance2
+   ```
+   Or simply run:
+   ```sh
+   npm install
+   ```
+   if you want to use the dependencies listed in `package.json`.
 
-The `QuantumMA` class takes historical price data and analyzes it to determine the most effective moving average. It calculates various MA types across different lengths (short, mid, long relative to the `baseLength`) and assigns a "score" based on how well each MA would have captured price movements within the `evalPeriod`. The MA configuration with the highest score is then selected as the "best MA" for the given data.
+## Configuration
 
-### Installation
+Create a `.env` file in the root directory with the following variables:
 
-No special installation is required beyond having Node.js installed.
+```
+ALPACA_API_KEY_ID=your_alpaca_key_id
+ALPACA_SECRET_KEY=your_alpaca_secret_key
+POLYGON_API_KEY=your_polygon_api_key
+FINNHUB_API_KEY=your_finnhub_api_key
+```
+
+- All variables are required for full functionality. The app will notify you if any are missing.
+
+## Usage
+
+Run the stock monitor from the command line, providing a stock symbol (e.g., AAPL):
+
+```sh
+node stockMonitor.js AAPL
+```
+
+- You will be prompted to select a timeframe (e.g., 1m, 5m, 1d, etc.).
+- The monitor will fetch historical data, display initial analysis, and begin real-time monitoring.
+- Buy/sell signals will be executed using Alpaca's paper trading API.
+
+## Notes
+- This project is for educational and paper trading purposes only. **No real money is used.**
+- Ensure your API keys are valid and have sufficient access.
+- To stop monitoring, press `Ctrl+C` in the terminal.
+
+## Project Structure
+- `stockMonitor.js` - Main monitoring and trading logic
+- `quantamMA.js` - Moving average analysis engine
+- `package.json` - Project dependencies
+
+## License
+Mozilla Public License 2.0

@@ -1,45 +1,48 @@
-# Stock Monitor
+# MeridianAlgo StockMonitor
 
-A Node.js application for monitoring stocks, analyzing moving averages, and executing trades using Alpaca's paper trading API. It fetches price data from Yahoo Finance and Finnhub, and checks market status with Polygon.
+StockMonitor is a Node.js tool for monitoring and paper trading stocks using an adaptive moving average (MA) algorithm. Part of the MeridianAlgo non-profit, it uses Alpaca's paper trading API for simulated buy/sell orders, focusing on research.
 
-## Features
-- Real-time and historical price monitoring
-- Multiple moving average strategies (SMA, EMA, HMA, etc.)
-- Automatic buy/sell signals and paper trading via Alpaca
-- Market status checks (Polygon, Yahoo Finance)
-- Configurable timeframes (1m, 5m, 15m, 1h, 1d)
+## 🌟 Overview
 
-## Prerequisites
-- Node.js (v14 or higher recommended)
-- npm (Node Package Manager)
-- API keys for:
-  - [Alpaca](https://alpaca.markets/)
-  - [Polygon.io](https://polygon.io/) (for market status)
-  - [Finnhub](https://finnhub.io/) (for real-time prices)
+StockMonitor fetches real-time and historical stock data, analyzes trends with the `QuantumMA` module, and generates automated paper trading signals via Alpaca.
 
-## Installation
+## ✨ Features
 
-1. **Clone the repository:**
-   ```sh
-   git clone <repo-url>
-   cd Stock
+- Tracks stocks (e.g., AAPL, TSLA).
+- **Adaptive QuantumMA**:
+  - Selects optimal MA type (SMA, EMA, WMA, Hull, ALMA, RMA, LINREG, VWMA) and length.
+  - Uses scoring and R-squared for MA evaluation.
+  - Outputs "Bullish," "Bearish," or "Neutral" trends.
+  - Configurable: `baseLength`, `evalPeriod`, `almaOffset`, `almaSigma`.
+- Data from Alpaca, Polygon.io, Finnhub, Yahoo Finance.
+- Executes simulated trades via Alpaca's paper trading API.
+- Verifies stock market status (Polygon.io, Alpaca).
+- Supports timeframes: `1m`, `5m`, `15m`, `1h`, `1d`.
+
+## ⚙️ Prerequisites
+
+- Node.js (v14+)
+- npm
+- API Keys:
+  - Alpaca (paper trading, stock data)
+  - Polygon.io (market status)
+  - Finnhub (real-time prices)
+
+## 📦 Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/MeridianAlgo/In-Node.git
+   cd In-Node
+   ```
+2. Install dependencies:
+   ```bash
+   npm install @alpacahq/alpaca-trade-api axios dotenv node-cron ws yahoo-finance2 node-fetch
    ```
 
-2. **Install dependencies:**
-   You can install all required packages at once with:
-   ```sh
-   npm install @alpacahq/alpaca-trade-api axios dotenv node-cron ws yahoo-finance2
-   ```
-   Or simply run:
-   ```sh
-   npm install
-   ```
-   if you want to use the dependencies listed in `package.json`.
+## 🔑 Configuration
 
-## Configuration
-
-Create a `.env` file in the root directory with the following variables:
-
+Create a `.env` file in the project root:
 ```
 ALPACA_API_KEY_ID=your_alpaca_key_id
 ALPACA_SECRET_KEY=your_alpaca_secret_key
@@ -47,29 +50,42 @@ POLYGON_API_KEY=your_polygon_api_key
 FINNHUB_API_KEY=your_finnhub_api_key
 ```
 
-- All variables are required for full functionality. The app will notify you if any are missing.
+## 🚀 Usage
 
-## Usage
-
-Run the stock monitor from the command line, providing a stock symbol (e.g., AAPL):
-
-```sh
+Run with a stock symbol:
+```bash
 node stockMonitor.js AAPL
 ```
+Select timeframe (e.g., `5m`). Monitors data and executes paper trades.
 
-- You will be prompted to select a timeframe (e.g., 1m, 5m, 1d, etc.).
-- The monitor will fetch historical data, display initial analysis, and begin real-time monitoring.
-- Buy/sell signals will be executed using Alpaca's paper trading API.
+**Example Output**:
+```
+=== Stock Monitor ===
+Symbol: AAPL | Timeframe: 5m
+APIs: Alpaca ✅ | Polygon ✅ | Finnhub ✅
+Market: OPEN (Polygon) | Tradable (Alpaca)
+Price: $150.25 | MA: $149.80 (EMA) | Trend: Bullish
+✅ Monitoring Active
+```
 
-## Notes
-- This project is for educational and paper trading purposes only. **No real money is used.**
-- Ensure your API keys are valid and have sufficient access.
-- To stop monitoring, press `Ctrl+C` in the terminal.
+## ⚠️ Disclaimers
 
-## Project Structure
-- `stockMonitor.js` - Main monitoring and trading logic
-- `quantamMA.js` - Moving average analysis engine
-- `package.json` - Project dependencies
+- **Not Financial Advice**: For research/education only. Not a recommendation to buy/sell stocks.
+- **Paper Trading Only**: Uses Alpaca's paper trading; no real money involved.
+- **Use at Your Own Risk**: MeridianAlgo is not liable for any losses or issues.
 
-## License
-Mozilla Public License 2.0
+## 📝 Notes
+
+- Stop with `Ctrl+C`.
+- Requires valid API keys.
+- `QuantumMA` powers trend analysis.
+
+## 📄 License
+
+Mozilla Public License
+
+## About
+
+MeridianAlgo is a non-profit advancing algorithmic trading research via open-source tools.
+
+© 2025 MeridianAlgo

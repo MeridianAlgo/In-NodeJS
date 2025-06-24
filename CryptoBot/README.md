@@ -49,10 +49,10 @@ Create a `.env` file in the root directory of the project (where `cryptoMonitor.
 
 ````
 
-ALPACA\_API\_KEY\_ID=your\_alpaca\_key\_id
-ALPACA\_SECRET\_KEY=your\_alpaca\_secret\_key
-POLYGON\_API\_KEY=your\_polygon\_api\_key
-FINNHUB\_API\_KEY=your\_finnhub\_api\_key
+ALPACA_API_KEY_ID=your_alpaca_key_id
+ALPACA_SECRET_KEY=your_alpaca_secret_key
+POLYGON_API_KEY=your_polygon_api_key
+FINNHUB_API_KEY=your_finnhub_api_key
 
 ````
 
@@ -73,7 +73,7 @@ node cryptoMonitor.js BTC/USD
 ### Example Output
 
 ```
-PS C:\Users\ishaa\OneDrive\Desktop\Crypto> node cryptoMonitor.js BTC/USD
+PS C:\Users\Meridian\OneDrive\Desktop\Crypto> node cryptoMonitor.js BTC/USD
 
 === Timeframe Configuration ===
 Available timeframes:

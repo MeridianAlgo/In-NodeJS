@@ -66,3 +66,100 @@ Run the stock monitor, providing a stock symbol (e.g., `AAPL`):
 
 ```sh
 node stockMonitor.js AAPL
+```
+
+You will be prompted to select a timeframe (e.g., 1m, 5m, 15m, 1h, 1d).
+The monitor will fetch historical data, display initial analysis, and begin real-time monitoring.
+Buy/sell signals will be executed using Alpaca's paper trading API.
+Monitoring Cryptocurrencies
+Run the crypto monitor, providing a crypto trading pair (e.g., BTC/USD):
+
+```sh
+node cryptoMonitor.js BTC/USD
+```
+
+Example Output (Crypto Monitor)
+```sh
+PS C:\Users\meridian\OneDrive\Desktop\CryptoBot> node cryptoMonitor.js BTC/USD
+
+=== Timeframe Configuration ===
+Available timeframes:
+1Min: 1 Minute
+5Min: 5 Minutes
+15Min: 15 Minutes
+1Hour: 1 Hour
+1Day: 1 Day
+
+Select timeframe (default: 5Min): 15Min
+
+Selected timeframe: 15Min
+
+=== Crypto Monitor Initialization ===
+Symbol: BTC/USD
+Timeframe: 15Min
+
+=== API Status ===
+Alpaca: ✅ Connected
+Polygon: ✅ Connected
+Finnhub: ✅ Connected
+
+=== Market Status (Polygon) ===
+Crypto market is OPEN (Polygon)
+
+=== Market Status (Alpaca) ===
+BTCUSD is available for trading (Alpaca)
+
+=== Alpaca Paper Trading Account ===
+Buying Power: $199766.36
+Portfolio Value: $99984.37
+Cash: $99781.99
+
+=== Market Analysis ===
+Current Price: $104925.35
+MA: $105144.46
+MA Type: SMA
+Trend: Bearish
+
+Waiting for data to stabilize...
+Connected to Finnhub WebSocket
+
+==================================================
+=== Regular Update for BTC/USD ===
+Time: 6/24/2025, 9:54:45 AM
+Current Price: $104925.35
+MA Type: SMA
+MA Length: 20
+MA Value: $105144.46
+Trend: Bearish
+Score: 4.96
+R-Squared: -6.34
+==================================================
+
+✅ Monitoring Active
+```
+
+## 📝 Notes
+This project is for educational and paper trading purposes only. No real money is used.
+Ensure your API keys are valid and have sufficient access for market data and paper trading.
+To stop monitoring, press Ctrl+C in the terminal.
+The QuantumMA module's adaptive logic is central to both stockMonitor.js and cryptoMonitor.js, providing an intelligent approach to moving average analysis.
+
+## 📂 Project Structure
+stockMonitor.js: Main logic for monitoring and paper trading traditional stocks.
+cryptoMonitor.js: Main logic for monitoring and paper trading cryptocurrencies.
+quantamMA.js: Core module containing the QuantumMA class for adaptive moving average calculation and analysis.
+.env: Configuration file for API keys (not included in repository, must be created locally).
+package.json: Project dependencies.
+
+## 🏗️ Development & Contribution
+As a non-profit, MeridianAlgo thrives on collaborative research and development. We welcome contributions from developers, quantitative analysts, and enthusiasts interested in algorithmic trading, data analysis, and open-source projects.
+
+If you'd like to contribute, please:
+
+Fork the repository.
+Create a new branch for your features or bug fixes.
+Ensure your code adheres to our style guidelines.
+Submit a pull request with a clear description of your changes.
+
+## 📄 License
+This project is open-source and available under the Mozilla Public Liscense.

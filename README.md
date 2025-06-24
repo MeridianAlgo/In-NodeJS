@@ -46,10 +46,13 @@ This Node.js application provides real-time and historical price monitoring, adv
 ## 🔑 Configuration
 
 Create a `.env` file in the root directory of the project with the following variables:
-ALPACA_API_KEY_ID=your_alpaca_key_id
-ALPACA_SECRET_KEY=your_alpaca_secret_key
-POLYGON_API_KEY=your_polygon_api_key
-FINNHUB_API_KEY=your_finnhub_api_key
+- *ALPACA_API_KEY_ID=your_alpaca_key_id*
+
+- *ALPACA_SECRET_KEY=your_alpaca_secret_key*
+
+- *POLYGON_API_KEY=your_polygon_api_key*
+
+- *FINNHUB_API_KEY=your_finnhub_api_key*
 
 * **All variables are required for full functionality.** The application will notify you if any are missing upon startup.
 

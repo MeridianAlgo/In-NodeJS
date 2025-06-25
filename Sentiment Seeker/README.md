@@ -73,5 +73,7 @@ Sentiment Meter: Bullish (60/100)
 - The script respects NewsAPI's free plan rate limit (1000 requests per 15 hours).
 - Llama API cannot browse the web; the script fetches article content for analysis.
 - For best results, use valid API keys and a stable internet connection.
+- As of this development LLAMA API is currently waitlisted so signing up will be nessacary however it is free to use for now
+  (June 25, 2025)
 
 ---

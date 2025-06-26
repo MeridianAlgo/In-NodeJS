@@ -42,6 +42,7 @@ class CryptoMonitor {
         });
         this.position = null;
         this.lastMarketCheck = false;
+        this.accumulatedPrices = []; // Store prices if insufficient data
     }
 
     static async configureTimeframe() {
@@ -103,7 +104,12 @@ class CryptoMonitor {
     // --- Market Status Check ---
     async checkMarketStatus() {
         // 1. Check if crypto market is open using Polygon
-        let polygonOpen = false;
+        let polygonStatus = {
+            available: !!this.polygonKey,
+            open: false,
+            message: '',
+            error: null
+        };
         if (this.polygonKey) {
             try {
                 const marketResponse = await axios.get(
@@ -111,49 +117,56 @@ class CryptoMonitor {
                     { headers: { 'Authorization': `Bearer ${this.polygonKey}` } }
                 );
                 if (marketResponse.data && marketResponse.data.currencies && marketResponse.data.currencies.crypto === 'open') {
-                    console.log('Crypto market is OPEN (Polygon)');
-                    polygonOpen = true;
+                    polygonStatus.open = true;
+                    polygonStatus.message = 'Crypto market is OPEN (Polygon)';
                 } else {
-                    console.log('Crypto market is CLOSED or in maintenance (Polygon)');
-                    polygonOpen = false;
+                    polygonStatus.open = false;
+                    polygonStatus.message = 'Crypto market is CLOSED or in maintenance (Polygon)';
                 }
             } catch (error) {
-                console.error('Polygon market status check failed:', error.message);
+                polygonStatus.error = 'Polygon market status check failed: ' + error.message;
             }
         } else {
-            console.log('No Polygon API key provided, skipping Polygon market status check.');
-        }
-        if (!polygonOpen) {
-            console.log('Aborting: Crypto market is not open according to Polygon.');
-            return false;
+            polygonStatus.message = 'No Polygon API key provided, skipping Polygon market status check.';
         }
         // 2. Check if the pair is tradable using Alpaca
-        return this.checkAlpacaAssetStatus();
+        const alpacaStatus = await this.checkAlpacaAssetStatus();
+        // Only allow monitoring if both Polygon is open and Alpaca is tradable
+        const canMonitor = polygonStatus.open && alpacaStatus.tradable;
+        return { polygonStatus, alpacaStatus, canMonitor };
     }
 
     async checkAlpacaAssetStatus() {
+        let status = {
+            available: true,
+            tradable: false,
+            message: '',
+            error: null
+        };
         try {
             // Use Alpaca's getAssets to check if pair is tradable
             const assets = await this.alpaca.getAssets({ asset_class: 'crypto', status: 'active' });
             const found = assets.find(a => (a.symbol === this.symbol || a.symbol === this.symbol.replace('/', '')) && a.tradable);
             if (found) {
-                console.log(`\n=== Market Status (Alpaca) ===`);
-                console.log(`${this.symbol} is available for trading (Alpaca)`);
-                return true;
+                status.tradable = true;
+                status.message = `${this.symbol} is available for trading (Alpaca)`;
             } else {
-                console.log(`\n❌ ${this.symbol} is not available for trading (Alpaca)`);
-                return false;
+                status.tradable = false;
+                status.message = `❌ ${this.symbol} is not available for trading (Alpaca)`;
             }
         } catch (error) {
-            console.error('Alpaca asset status check failed:', error.message);
-            return false;
+            status.error = 'Alpaca asset status check failed: ' + error.message;
+            status.available = false;
         }
+        return status;
     }
 
     // --- Historical Data Initialization ---
     async initializeHistoricalData() {
         // Use Alpaca for historical OHLCV
-        const bars = await this.fetchAlpacaHistorical(this.symbol, this.timeframe, 1000);
+        // Fetch at least 2x the baseLength bars for robust MA calculation
+        const minBars = Math.max(this.quantumMA.baseLength * 2, 50);
+        const bars = await this.fetchAlpacaHistorical(this.symbol, this.timeframe, minBars);
         if (bars.length === 0) {
             console.error('Alpaca historical data unavailable for', this.symbol);
             return false;
@@ -199,9 +212,21 @@ class CryptoMonitor {
             console.error('No data from Alpaca');
             return [];
         }
+        // Append new prices to accumulatedPrices
+        const newPrices = bars.map(b => b.close || b.c);
+        // Only add truly new prices
+        for (const price of newPrices) {
+            if (this.accumulatedPrices.length === 0 || price !== this.accumulatedPrices[this.accumulatedPrices.length - 1]) {
+                this.accumulatedPrices.push(price);
+            }
+        }
+        // Limit to last 1000 prices to avoid memory bloat
+        if (this.accumulatedPrices.length > 1000) {
+            this.accumulatedPrices = this.accumulatedPrices.slice(-1000);
+        }
         this.historicalData = bars;
         this.currentPrice = bars[bars.length - 1].c;
-        return bars.map(b => b.c);
+        return this.accumulatedPrices;
     }
 
     // --- Signal Generation ---
@@ -268,7 +293,7 @@ class CryptoMonitor {
             // Get current positions
             const positions = await this.alpaca.getPositions();
             const currentPosition = positions.find(p => p.symbol === this.symbol.replace('/', ''));
-            const quantity = 0.001; // Fixed quantity for crypto (e.g., 0.001 BTC)
+            const quantity = 0.0009; // Fixed quantity for crypto (e.g., 0.001 BTC)
             if (signal === 'BUY' && !currentPosition) {
                 console.log(`\n=== Executing BUY Order ===`);
                 console.log(`Symbol: ${this.symbol}`);
@@ -281,8 +306,7 @@ class CryptoMonitor {
                     qty: quantity,
                     side: 'buy',
                     type: 'market',
-                    time_in_force: 'gtc',
-                    extended_hours: true
+                    time_in_force: 'gtc'
                 });
                 console.log(`Order placed successfully: ${order.id}`);
                 await new Promise(resolve => setTimeout(resolve, 1000));
@@ -290,27 +314,15 @@ class CryptoMonitor {
                 const newPosition = updatedPositions.find(p => p.symbol === this.symbol.replace('/', ''));
                 if (newPosition) {
                     const entryPrice = parseFloat(newPosition.avg_entry_price);
-                    const stopLossPrice = entryPrice * 0.99;
                     const takeProfitPrice = entryPrice * 1.01;
-                    await this.alpaca.createOrder({
-                        symbol: this.symbol.replace('/', ''),
-                        qty: quantity,
-                        side: 'sell',
-                        type: 'stop',
-                        time_in_force: 'gtc',
-                        stop_price: stopLossPrice,
-                        extended_hours: true
-                    });
                     await this.alpaca.createOrder({
                         symbol: this.symbol.replace('/', ''),
                         qty: quantity,
                         side: 'sell',
                         type: 'limit',
                         time_in_force: 'gtc',
-                        limit_price: takeProfitPrice,
-                        extended_hours: true
+                        limit_price: takeProfitPrice
                     });
-                    console.log(`Stop Loss set at: $${stopLossPrice.toFixed(2)}`);
                     console.log(`Take Profit set at: $${takeProfitPrice.toFixed(2)}`);
                 }
             } else if (signal === 'SELL' && currentPosition) {
@@ -323,10 +335,16 @@ class CryptoMonitor {
                     qty: currentPosition.qty,
                     side: 'sell',
                     type: 'market',
-                    time_in_force: 'gtc',
-                    extended_hours: true
+                    time_in_force: 'gtc'
                 });
                 console.log(`Order placed successfully: ${order.id}`);
+                // Calculate and print profit/loss
+                const entryPrice = parseFloat(currentPosition.avg_entry_price);
+                const exitPrice = parseFloat(this.currentPrice);
+                const quantity = parseFloat(currentPosition.qty);
+                const pnl = (exitPrice - entryPrice) * quantity;
+                const pnlStr = pnl >= 0 ? `Profit` : `Loss`;
+                console.log(`${pnlStr}: $${pnl.toFixed(2)} (Entry: $${entryPrice.toFixed(2)}, Exit: $${exitPrice.toFixed(2)}, Qty: ${quantity})`);
             }
         } catch (error) {
             console.error('Error executing trade:', error.message);
@@ -341,6 +359,13 @@ class CryptoMonitor {
         try {
             if (!this.historicalData || this.historicalData.length === 0) return;
             const prices = this.historicalData.map(d => d.close || d.c);
+            // Store prices for accumulation if not enough data
+            this.accumulatedPrices = prices.slice();
+            let effectiveLength = this.quantumMA.baseLength;
+            if (prices.length < effectiveLength) {
+                console.warn(`Not enough data for full MA calculation (need ${effectiveLength}, have ${prices.length}). Using available data.`);
+                effectiveLength = prices.length;
+            }
             if (!prices.length || prices.some(v => v == null || isNaN(v))) {
                 console.warn('No valid price data for MA calculation.');
                 return;
@@ -350,7 +375,11 @@ class CryptoMonitor {
             const currentMA = analysis.maValues[analysis.maValues.length - 1];
             console.log('\n=== Market Analysis ===');
             console.log(`Current Price: $${currentPrice.toFixed(2)}`);
-            console.log(`MA: $${currentMA.toFixed(2)}`);
+            if (prices.length < this.quantumMA.baseLength || currentMA === 0) {
+                console.log('MA: N/A (insufficient data)');
+            } else {
+                console.log(`MA: $${currentMA.toFixed(2)}`);
+            }
             console.log(`MA Type: ${analysis.maType}`);
             console.log(`Trend: ${analysis.trendDirection}`);
         } catch (error) {
@@ -362,6 +391,12 @@ class CryptoMonitor {
     async displayRegularUpdate() {
         try {
             const prices = await this.getCryptoData();
+            let effectiveLength = this.quantumMA.baseLength;
+            if (prices.length < effectiveLength) {
+                console.warn(`Not enough data for full MA calculation (need ${effectiveLength}, have ${prices.length}). Accumulating more data...`);
+                // Do not proceed with MA calculation until enough data is available
+                return;
+            }
             if (!prices.length || prices.some(v => v == null || isNaN(v))) {
                 console.warn('No valid price data for MA calculation.');
                 return;
@@ -370,17 +405,25 @@ class CryptoMonitor {
             const currentPrice = prices[prices.length - 1];
             const currentMA = analysis.maValues[analysis.maValues.length - 1];
             const timestamp = new Date().toLocaleString();
-            console.log('\n' + '='.repeat(50));
-            console.log(`=== Regular Update for ${this.symbol} ===`);
-            console.log(`Time: ${timestamp}`);
-            console.log(`Current Price: $${currentPrice.toFixed(2)}`);
-            console.log(`MA Type: ${analysis.maType}`);
-            console.log(`MA Length: ${analysis.length}`);
-            console.log(`MA Value: $${currentMA.toFixed(2)}`);
-            console.log(`Trend: ${analysis.trendDirection}`);
-            console.log(`Score: ${analysis.score.toFixed(2)}`);
-            console.log(`R-Squared: ${analysis.rSquared.toFixed(2)}`);
-            console.log('='.repeat(50));
+            // Only print regular update for 15Min or higher timeframes
+            if (this.timeframe === '15Min' || this.timeframe === '1Hour' || this.timeframe === '1Day') {
+                console.log('\n' + '='.repeat(50));
+                console.log(`=== Regular Update for ${this.symbol} ===`);
+                console.log(`Time: ${timestamp}`);
+                console.log(`Current Price: $${currentPrice.toFixed(2)}`);
+                console.log(`MA Type: ${analysis.maType}`);
+                console.log(`MA Length: ${analysis.length}`);
+                if (prices.length < this.quantumMA.baseLength || currentMA === 0) {
+                    console.log('MA Value: N/A (insufficient data)');
+                } else {
+                    console.log(`MA Value: $${currentMA.toFixed(2)}`);
+                }
+                console.log(`Trend: ${analysis.trendDirection}`);
+                console.log(`Score: ${analysis.score.toFixed(2)}`);
+                console.log(`R-Squared: ${analysis.rSquared.toFixed(2)}`);
+                console.log('='.repeat(50));
+            }
+            // Always check for signals (signal printing is handled in checkSignals)
             this.checkSignals(prices, analysis.maValues);
         } catch (error) {
             console.error('Error in regular update:', error.message);
@@ -394,16 +437,31 @@ class CryptoMonitor {
         console.log(`Timeframe: ${this.timeframe}`);
         this.isMonitoring = true;
         // API Status
-        console.log('\n=== API Status ===');
         const alpacaInitialized = await this.initializeAlpaca();
-        console.log(`Alpaca: ${alpacaInitialized ? '✅ Connected' : '❌ Not Connected'}`);
         const polygonInitialized = !!this.polygonKey;
-        console.log(`Polygon: ${polygonInitialized ? '✅ Connected' : '❌ Not Connected'}`);
         const finnhubInitialized = !!this.finnhubKey;
-        console.log(`Finnhub: ${finnhubInitialized ? '✅ Connected' : '❌ Not Connected'}`);
+        if (alpacaInitialized || polygonInitialized || finnhubInitialized) {
+            console.log('\n=== API Status ===');
+            console.log(`Alpaca: ${alpacaInitialized ? '✅ Connected' : '❌ Not Connected'}`);
+            console.log(`Polygon: ${polygonInitialized ? '✅ Connected' : '❌ Not Connected'}`);
+            console.log(`Finnhub: ${finnhubInitialized ? '✅ Connected' : '❌ Not Connected'}`);
+        }
         // Market Status
-        const marketStatus = await this.checkMarketStatus();
-        if (!marketStatus) {
+        const { polygonStatus, alpacaStatus, canMonitor } = await this.checkMarketStatus();
+        if (polygonStatus || alpacaStatus) {
+            console.log('\n=== Market Status ===');
+            if (polygonStatus.error) {
+                console.log(polygonStatus.error);
+            } else if (polygonStatus.message) {
+                console.log(polygonStatus.message);
+            }
+            if (alpacaStatus.error) {
+                console.log(alpacaStatus.error);
+            } else if (alpacaStatus.message) {
+                console.log(alpacaStatus.message);
+            }
+        }
+        if (!canMonitor) {
             this.stopMonitoring();
             return;
         }

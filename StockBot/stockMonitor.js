@@ -675,19 +675,22 @@ class StockMonitor {
             const currentMA = analysis.maValues[analysis.maValues.length - 1];
             const timestamp = new Date().toLocaleString();
 
-            console.log('\n' + '='.repeat(50));
-            console.log(`=== Regular Update for ${this.symbol} ===`);
-            console.log(`Time: ${timestamp}`);
-            console.log(`Current Price: $${currentPrice.toFixed(2)}`);
-            console.log(`MA Type: ${analysis.maType}`);
-            console.log(`MA Length: ${analysis.length}`);
-            console.log(`MA Value: $${currentMA.toFixed(2)}`);
-            console.log(`Trend: ${analysis.trendDirection}`);
-            console.log(`Score: ${analysis.score.toFixed(2)}`);
-            console.log(`R-Squared: ${analysis.rSquared.toFixed(2)}`);
-            console.log('='.repeat(50));
+            // Only print regular updates for 1h or 1d timeframes
+            if (this.timeframe === '1h' || this.timeframe === '1d') {
+                console.log('\n' + '='.repeat(50));
+                console.log(`=== Regular Update for ${this.symbol} ===`);
+                console.log(`Time: ${timestamp}`);
+                console.log(`Current Price: $${currentPrice.toFixed(2)}`);
+                console.log(`MA Type: ${analysis.maType}`);
+                console.log(`MA Length: ${analysis.length}`);
+                console.log(`MA Value: $${currentMA.toFixed(2)}`);
+                console.log(`Trend: ${analysis.trendDirection}`);
+                console.log(`Score: ${analysis.score.toFixed(2)}`);
+                console.log(`R-Squared: ${analysis.rSquared.toFixed(2)}`);
+                console.log('='.repeat(50));
+            }
 
-            // Check for signals
+            // Check for signals (always process signals and trades)
             this.checkSignals(prices, analysis.maValues);
         } catch (error) {
             console.error('Error in regular update:', error.message);

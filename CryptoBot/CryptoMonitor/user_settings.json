@@ -1,0 +1,6 @@
+{
+  "enablePositionLogging": true,
+  "defaultTakeProfit": "auto",
+  "defaultStopLoss": "auto",
+  "defaultTimeframe": "1min"
+}

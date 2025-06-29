@@ -1,0 +1,16 @@
+{
+  "dependencies": {
+    "@alpacahq/alpaca-trade-api": "^1.4.2",
+    "@api/testalpacadocs": "file:.api/apis/testalpacadocs",
+    "axios": "^1.10.0",
+    "cheerio": "^1.1.0",
+    "cryptowatch-api": "^0.1.1",
+    "dotenv": "^16.5.0",
+    "fetch": "^1.1.0",
+    "node-cron": "^4.1.1",
+    "node-fetch": "^2.7.0",
+    "node-notifier": "^10.0.1",
+    "ws": "^8.18.2",
+    "yahoo-finance2": "^2.13.3"
+  }
+}

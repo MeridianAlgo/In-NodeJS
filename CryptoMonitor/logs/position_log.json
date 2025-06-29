@@ -1,0 +1,23 @@
+[
+  {
+    "symbol": "BTC/USD",
+    "timestamp": "2025-06-28T15:21:06.708Z",
+    "entryPrice": 107439.2,
+    "exitPrice": 107270.15,
+    "quantity": 0.000927675,
+    "pnl": -0.1568234587500027,
+    "pnlPercent": -0.15734480524799413,
+    "closeReason": "MA Crossunder",
+    "takeProfitPercent": 4,
+    "stopLossPercent": 2,
+    "takeProfitPrice": 111736.768,
+    "stopLossPrice": 105290.416,
+    "maType": "Unknown",
+    "maLength": 20,
+    "timeframe": "1min",
+    "currentPrice": 107270.15,
+    "trendDirection": "Bullish",
+    "score": 0,
+    "rSquared": null
+  }
+]

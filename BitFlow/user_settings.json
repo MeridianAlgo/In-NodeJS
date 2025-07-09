@@ -1,0 +1,8 @@
+{
+  "enablePositionLogging": true,
+  "defaultTakeProfit": "auto",
+  "defaultStopLoss": "auto",
+  "defaultTimeframe": "1Day",
+  "enableCrossunderSignals": true,
+  "enablePerformanceMetrics": true
+}

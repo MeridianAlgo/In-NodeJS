@@ -1,4 +1,4 @@
-# BitFlow
+# BitFlow (formaly CryptoMonitor)
 
 BitFlow is a crypto trading bot that uses modern Node.js and Python tools to automate trading, backtesting, and monitoring. It features a modern CLI UI, dynamic position sizing, and advanced analytics.
 
@@ -29,7 +29,7 @@ BitFlow is a crypto trading bot that uses modern Node.js and Python tools to aut
 
 ## Running the Bot
 
-1. Edit `user_settings.json` to your desired preferences.
+1. Run ```npm install``` on your terminal with your folder open
 2. Run the bot:
    ```sh
    node BitFlow.js BTC/USD
